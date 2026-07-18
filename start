@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>40 giorni – Preghiera contemplativa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #f9f7f4;
+            --text: #2c3e50;
+            --accent: #e67e22;
+            --card-bg: #fffbf5;
+            --border: #ddd;
+            --shadow: rgba(0,0,0,0.06);
+            --nav-bg: #2c3e50;
+            --nav-text: #ecf0f1;
+            --note-bg: #fefcf8;
+            --modal-bg: rgba(0,0,0,0.5);
+        }
+
+        body.dark {
+            --bg: #1a1e26;
+            --text: #e8e6e3;
+            --card-bg: #262c38;
+            --border: #3d4555;
+            --shadow: rgba(0,0,0,0.3);
+            --nav-bg: #0f1217;
+            --nav-text: #d0cdc8;
+            --note-bg: #2a303d;
+            --modal-bg: rgba(0,0,0,0.7);
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: var(--bg);
+            color: var(--text);
+            transition: background 0.3s, color 0.3s;
+            padding-top: 80px;
+        }
+
+        /* ===== TOP BAR ===== */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: var(--nav-bg);
+            color: var(--nav-text);
+            padding: 10px 16px 8px 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: background 0.3s;
+        }
+
+        .top-bar .top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .top-bar .top-row h1 {
+            font-size: 1.1rem;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+
+        .top-bar .top-row .controls {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .top-bar .top-row .controls button {
+            background: transparent;
+            border: 1px solid #5a6f82;
+            color: var(--nav-text);
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+            white-space: nowrap;
+            font-family: inherit;
+            min-height: 34px;
+        }
+
+        .top-bar .top-row .controls button:hover {
+            background: #3d566e;
+        }
+
+        .top-bar .top-row .controls .notes-btn {
+            border-color: var(--accent);
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .top-bar .top-row .controls .notes-btn:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .top-bar .top-row .controls .font-btn {
+            font-weight: 700;
+            font-size: 1rem;
+            padding: 4px 12px;
+            min-width: 36px;
+        }
+
+        /* Giorni – strip */
+        .day-strip {
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            padding: 4px 2px 6px 2px;
+            scrollbar-width: thin;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .day-strip::-webkit-scrollbar {
+            height: 4px;
+        }
+        .day-strip::-webkit-scrollbar-thumb {
+            background: #5a6f82;
+            border-radius: 4px;
+        }
+
+        .day-strip .day-btn {
+            flex: 0 0 44px;
+            height: 44px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            background: #3d566e;
+            color: #d0cdc8;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, border 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            font-family: inherit;
+            position: relative;
+        }
+
+        .day-strip .day-btn:hover {
+            background: #4e6a84;
+            transform: scale(1.04);
+        }
+
+        .day-strip .day-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: #fff;
+            transform: scale(1.06);
+        }
+
+        .day-strip .day-btn.checked {
+            border-color: #2ecc71;
+        }
+
+        .day-strip .day-btn.checked::after {
+            content: "✓";
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            font-size: 0.65rem;
+            background: #2ecc71;
+            color: #fff;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        /* ===== MAIN ===== */
+        main {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 20px 24px 60px 24px;
+        }
+
+        #day-detail {
+            animation: fadeIn 0.25s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .detail-header {
+            margin-bottom: 18px;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+        }
+
+        .detail-header .day-number {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            letter-spacing: 1px;
+            font-weight: 300;
+        }
+
+        .detail-header h2 {
+            font-size: 2rem;
+            font-weight: 400;
+            color: var(--text);
+            margin: 2px 0 2px 0;
+        }
+
+        .detail-header .reference {
+            font-size: 1rem;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        .bible-text {
+            background: var(--card-bg);
+            border-left: 6px solid var(--accent);
+            padding: 22px 28px;
+            border-radius: 4px;
+            margin: 12px 0 20px 0;
+            box-shadow: 0 2px 8px var(--shadow);
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--text);
+            transition: background 0.3s, font-size 0.1s;
+        }
+
+        .bible-text .versetto {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .bible-text .versetto .num {
+            font-weight: 700;
+            color: var(--accent);
+            margin-right: 8px;
+        }
+
+        .translation-note {
+            font-size: 0.8rem;
+            color: #95a5a6;
+            text-align: right;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        /* ===== NOTE ===== */
+        .notes-section {
+            margin-top: 28px;
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+        }
+
+        .notes-section h3 {
+            font-weight: 400;
+            font-size: 1.1rem;
+            color: var(--text);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notes-section textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 14px 16px;
+            font-family: inherit;
+            font-size: 1rem;
+            background: var(--note-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            resize: vertical;
+            transition: border 0.2s, background 0.3s;
+            line-height: 1.6;
+        }
+
+        .notes-section textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(230, 126, 34, 0.15);
+        }
+
+        .notes-section .note-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .notes-section .note-actions button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .notes-section .note-actions button:hover {
+            opacity: 0.85;
+            transform: scale(1.02);
+        }
+
+        .notes-section .note-actions .clear-note {
+            background: transparent;
+            color: #95a5a6;
+            border: 1px solid var(--border);
+        }
+
+        .notes-section .note-actions .clear-note:hover {
+            background: #e74c3c;
+            color: #fff;
+            border-color: #e74c3c;
+        }
+
+        .notes-section .saved-indicator {
+            font-size: 0.85rem;
+            color: #27ae60;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .notes-section .saved-indicator.show {
+            opacity: 1;
+        }
+
+        /* ===== CHECK BUTTON ===== */
+        .check-section {
+            display: flex;
+            justify-content: center;
+            margin: 24px 0 10px 0;
+        }
+
+        .check-btn {
+            padding: 12px 32px;
+            border: 2px solid var(--border);
+            border-radius: 50px;
+            background: transparent;
+            color: var(--text);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .check-btn:hover {
+            transform: scale(1.03);
+        }
+
+        .check-btn.is-checked {
+            background: #2ecc71;
+            border-color: #2ecc71;
+            color: #fff;
+        }
+
+        .check-btn.is-checked:hover {
+            background: #27ae60;
+            border-color: #27ae60;
+        }
+
+        .check-btn:not(.is-checked):hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* ===== NAV GIORNI (frecce) ===== */
+        .day-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .day-nav button {
+            background: var(--nav-bg);
+            color: var(--nav-text);
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s, transform 0.1s;
+            min-height: 48px;
+            min-width: 100px;
+        }
+
+        .day-nav button:hover:not(:disabled) {
+            background: var(--accent);
+            color: #fff;
+            transform: scale(1.02);
+        }
+
+        .day-nav button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ===== MODALE NOTE ===== */
+        #notesModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--modal-bg);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #notesModal.open {
+            display: flex;
+        }
+
+        .notes-modal-content {
+            background: var(--bg);
+            color: var(--text);
+            max-width: 700px;
+            width: 100%;
+            max-height: 85vh;
+            border-radius: 16px;
+            padding: 28px 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            overflow-y: auto;
+            position: relative;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .notes-modal-content .close-modal {
+            position: sticky;
+            top: 0;
+            float: right;
+            background: var(--border);
+            border: none;
+            font-size: 1.6rem;
+            line-height: 1;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .notes-modal-content .close-modal:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .notes-modal-content h2 {
+            font-weight: 400;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .notes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .notes-list .note-item {
+            background: var(--card-bg);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px;
+            border-radius: 6px;
+            box-shadow: 0 1px 4px var(--shadow);
+        }
+
+        .notes-list .note-item .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .notes-list .note-item .note-header .day-label {
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .notes-list .note-item .note-header .title {
+            font-style: italic;
+            color: #7f8c8d;
+            font-size: 0.95rem;
+        }
+
+        .notes-list .note-item .note-body {
+            white-space: pre-wrap;
+            line-height: 1.5;
+            margin-top: 4px;
+            font-size: 0.95rem;
+        }
+
+        .notes-list .empty-notes {
+            color: #95a5a6;
+            font-style: italic;
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            body {
+                padding-top: 110px;
+            }
+            .top-bar {
+                padding: 8px 10px 6px 10px;
+            }
+            .top-bar .top-row h1 {
+                font-size: 0.95rem;
+            }
+            .day-strip .day-btn {
+                flex: 0 0 38px;
+                height: 38px;
+                font-size: 0.8rem;
+            }
+            .day-strip .day-btn.checked::after {
+                width: 16px;
+                height: 16px;
+                font-size: 0.55rem;
+                top: -5px;
+                right: -5px;
+            }
+            .detail-header h2 {
+                font-size: 1.5rem;
+            }
+            .bible-text {
+                padding: 16px 18px;
+                font-size: 1rem;
+            }
+            .day-nav button {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+                min-width: 70px;
+                min-height: 42px;
+            }
+            main {
+                padding: 12px 14px 40px 14px;
+            }
+            .notes-modal-content {
+                padding: 20px 16px;
+            }
+            .check-btn {
+                padding: 10px 24px;
+                font-size: 1rem;
+            }
+            .top-bar .top-row .controls button {
+                padding: 2px 8px;
+                font-size: 0.8rem;
+                min-height: 30px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding-top: 120px;
+            }
+            .day-strip .day-btn {
+                flex: 0 0 34px;
+                height: 34px;
+                font-size: 0.7rem;
+                border-radius: 6px;
+            }
+            .day-strip .day-btn.checked::after {
+                width: 14px;
+                height: 14px;
+                font-size: 0.5rem;
+                top: -4px;
+                right: -4px;
+            }
+            .top-bar .top-row h1 {
+                font-size: 0.85rem;
+            }
+            .top-bar .top-row .controls button {
+                padding: 2px 6px;
+                font-size: 0.75rem;
+                min-height: 28px;
+            }
+            .detail-header h2 {
+                font-size: 1.2rem;
+            }
+            .check-btn {
+                padding: 8px 18px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== TOP BAR ===== -->
+<div class="top-bar" id="topBar">
+    <div class="top-row">
+        <h1>📖 40 giorni di preghiera</h1>
+        <div class="controls">
+            <button class="font-btn" id="fontDec" title="Diminuisci testo">A−</button>
+            <button class="font-btn" id="fontInc" title="Aumenta testo">A+</button>
+            <button class="notes-btn" id="openNotesBtn">📝 Note</button>
+            <button id="darkToggle">🌙</button>
+        </div>
+    </div>
+    <div class="day-strip" id="dayStrip"></div>
+</div>
+
+<!-- ===== CONTENUTO ===== -->
+<main>
+    <div id="day-detail"></div>
+</main>
+
+<!-- ===== MODALE NOTE ===== -->
+<div id="notesModal">
+    <div class="notes-modal-content">
+        <button class="close-modal" id="closeNotesModal">✕</button>
+        <h2>📝 Tutte le riflessioni</h2>
+        <div class="notes-list" id="notesList">
+            <!-- riempito da JS -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    //  DATI – 40 GIORNI (testo NR06) – completo
+    // ============================================================
+    const days = [
+        { giorno: 1, titolo: "Il dono della preghiera", riferimenti: ["Isaia 30:15-18"], testo: ["15 Poiché così dice il Signore, l'Eterno, il Santo d'Israele: «Nella conversione e nella quiete sarete salvati; nella calma e nella fiducia sarà la vostra forza»; ma voi non avete voluto.", "16 Voi avete detto: «No, perché noi fuggiremo a cavallo»; perciò sarete messi in fuga. «No, perché galopperemo su cavalli veloci»; perciò i vostri inseguitori saranno veloci.", "17 Mille fuggiranno davanti alla minaccia di uno solo; davanti alla minaccia di cinque fuggirete tutti, finché sarete lasciati come un'asta in cima a un monte, come un segnale su un colle.", "18 Perciò il Signore aspetta per farvi grazia; perciò si alzerà per aver compassione di voi, poiché il Signore è un Dio di giustizia; beati tutti quelli che sperano in lui."] },
+        { giorno: 2, titolo: "Ancora un insegnante", riferimenti: ["Matteo 28:16-20"], testo: ["16 I discepoli dunque andarono in Galilea, sul monte che Gesù aveva loro designato.", "17 Quando lo videro, lo adorarono; ma alcuni dubitarono.", "18 Gesù, avvicinatosi, parlò loro dicendo: «Ogni potere mi è stato dato in cielo e sulla terra.", "19 Andate dunque e fate discepoli tutti i popoli, battezzandoli nel nome del Padre, del Figlio e dello Spirito Santo,", "20 insegnando loro a osservare tutte le cose che vi ho comandate. Ed ecco, io sono con voi tutti i giorni, fino alla fine del mondo»."] },
+        { giorno: 3, titolo: "La fiamma interiore dello Spirito", riferimenti: ["Atti 2:1-4"], testo: ["1 Mentre il giorno di Pentecoste si stava compiendo, erano tutti insieme nello stesso luogo.", "2 All'improvviso venne dal cielo un suono come di vento impetuoso che soffia, e riempì tutta la casa dove essi sedevano.", "3 Apparvero loro delle lingue come di fuoco che si dividevano e si posarono su ciascuno di loro.", "4 Furono tutti pieni di Spirito Santo e cominciarono a parlare in altre lingue, come lo Spirito dava loro di esprimersi."] },
+        { giorno: 4, titolo: "Dimensioni della preghiera", riferimenti: ["Salmo 37:1-7"], testo: ["1 Non affliggerti a motivo dei malvagi, non portare invidia a quelli che fanno l'iniquità,", "2 perché saranno presto falciati come l'erba e appassiranno come il verde del prato.", "3 Confida nel Signore e fa' il bene; abita il paese e coltiva la fedeltà.", "4 Cerca la tua gioia nel Signore, ed egli ti darà i desideri del tuo cuore.", "5 Affida la tua via al Signore, confida in lui, ed egli agirà.", "6 Farà risplendere la tua giustizia come la luce e il tuo diritto come il mezzogiorno.", "7 Sta' in silenzio davanti al Signore e aspettalo con pazienza; non affliggerti per chi prospera nelle sue vie, per l'uomo che riesce nei suoi disegni malvagi."] },
+        { giorno: 5, titolo: "Lasciare che Dio detti il ritmo", riferimenti: ["Salmo 46:1-11"], testo: ["1 Dio è il nostro rifugio e la nostra forza, un aiuto sempre pronto nelle difficoltà.", "2 Perciò non temeremo, anche se la terra è scossa e i monti cadono in fondo al mare,", "3 anche se le sue acque muggono e si gonfiano, e i monti tremano per la loro violenza. – Sela.", "4 C'è un fiume i cui ruscelli rallegrano la città di Dio, il luogo santo delle dimore dell'Altissimo.", "5 Dio è in mezzo a lei; non sarà scossa; Dio la soccorrerà allo spuntar dell'alba.", "6 Le nazioni si agitarono, i regni crollarono; egli tuonò, la terra si sciolse.", "7 Il Signore degli eserciti è con noi; il Dio di Giacobbe è il nostro rifugio. – Sela.", "8 Venite, guardate le opere del Signore, le devastazioni che ha compiute sulla terra!", "9 Egli fa cessare le guerre fino all'estremità della terra, spezza l'arco e rompe la lancia, brucia i carri col fuoco.", "10 «Fermatevi e riconoscete che io sono Dio; sarò esaltato tra le nazioni, sarò esaltato sulla terra!»", "11 Il Signore degli eserciti è con noi; il Dio di Giacobbe è il nostro rifugio. – Sela."] },
+        { giorno: 6, titolo: "Immagine di Dio", riferimenti: ["Giovanni 15:1-5"], testo: ["1 «Io sono la vera vite e il Padre mio è l'agricoltore.", "2 Ogni tralcio che in me non porta frutto, egli lo taglia; e ogni tralcio che porta frutto, lo pota perché porti più frutto.", "3 Voi siete già puri a causa della parola che vi ho annunciato.", "4 Rimanete in me e io rimarrò in voi. Come il tralcio non può portare frutto da sé, se non rimane nella vite, così neanche voi, se non rimanete in me.", "5 Io sono la vite, voi siete i tralci. Colui che rimane in me e io in lui, porta molto frutto; perché senza di me non potete far nulla."] },
+        { giorno: 7, titolo: "Il metodo della preghiera centrata", riferimenti: ["Matteo 6:5-6"], testo: ["5 «Quando pregate, non siate come gli ipocriti, che amano pregare stando in piedi nelle sinagoghe e agli angoli delle piazze per essere visti dagli uomini. In verità vi dico che hanno già ricevuto la loro ricompensa.", "6 Ma tu, quando preghi, entra nella tua camera, chiudi la porta e prega il Padre tuo che è nel segreto; e il Padre tuo, che vede nel segreto, ti ricompenserà."] },
+        { giorno: 8, titolo: "Ulteriori linee guida", riferimenti: ["Matteo 6:5-8"], testo: ["5 «Quando pregate, non siate come gli ipocriti, che amano pregare stando in piedi nelle sinagoghe e agli angoli delle piazze per essere visti dagli uomini. In verità vi dico che hanno già ricevuto la loro ricompensa.", "6 Ma tu, quando preghi, entra nella tua camera, chiudi la porta e prega il Padre tuo che è nel segreto; e il Padre tuo, che vede nel segreto, ti ricompenserà.", "7 Nel pregare, non usate inutili ripetizioni come fanno i pagani, perché pensano di essere esauditi per il loro molto parlare.", "8 Non siate dunque come loro, perché il Padre vostro sa di quali cose avete bisogno prima che gliele chiediate."] },
+        { giorno: 9, titolo: "L'intuizione di un profeta", riferimenti: ["Salmo 62:1-12"], testo: ["1 Solo in Dio riposa l'anima mia; da lui viene la mia salvezza.", "2 Lui solo è la mia rocca, la mia salvezza, il mio alto rifugio; non sarò mai scosso.", "3 Fino a quando vi scaglierete contro un uomo? Voi tutti lo aggredirete come un muro che cede, come una recinzione che si abbatte.", "4 Essi non pensano che ad abbassarlo dalla sua altezza; si compiacciono nella menzogna; benedicono con la bocca, ma maledicono dentro di sé. – Sela.", "5 Solo in Dio, o anima mia, riposa, perché da lui viene la mia speranza.", "6 Lui solo è la mia rocca, la mia salvezza, il mio alto rifugio; non sarò scosso.", "7 In Dio è la mia salvezza e la mia gloria; la mia forte roccia, il mio rifugio è in Dio.", "8 Confidate in lui in ogni tempo, o popoli; sfogate il vostro cuore davanti a lui; Dio è il nostro rifugio. – Sela.", "9 Gli uomini del popolo sono un soffio, gli uomini altolocati una menzogna; sulla bilancia salgono, tutti insieme sono più leggeri di un soffio.", "10 Non confidate nell'oppressione, non illudetevi con la rapina; se le ricchezze aumentano, non ci mettete il cuore.", "11 Dio ha parlato una volta, due volte ho udito questo: che la potenza appartiene a Dio,", "12 e che a te, Signore, appartiene la misericordia, perché tu rendi a ciascuno secondo le sue opere."] },
+        { giorno: 10, titolo: "Pulizia", riferimenti: ["Ezechiele 36:25-28"], testo: ["25 Vi aspergerò con acqua pura e sarete purificati; io vi purificherò da tutte le vostre impurità e da tutti i vostri idoli.", "26 Vi darò un cuore nuovo e metterò dentro di voi uno spirito nuovo; toglierò dal vostro corpo il cuore di pietra e vi darò un cuore di carne.", "27 Metterò dentro di voi il mio Spirito e farò sì che camminiate secondo i miei statuti, che osserviate e mettiate in pratica le mie leggi.", "28 Abiterete nel paese che io ho dato ai vostri padri; sarete mio popolo e io sarò il vostro Dio."] },
+        { giorno: 11, titolo: "Vecchio io / Nuovo io", riferimenti: ["Efesini 4:20-5:2"], testo: ["20 Ma voi non avete così imparato Cristo,", "21 se pure lo avete ascoltato e in lui siete stati istruiti, secondo la verità che è in Gesù,", "22 a deporre, quanto alla condotta precedente, il vecchio uomo che si corrompe seguendo le passioni dell'inganno,", "23 a essere rinnovati nello spirito della vostra mente", "24 e a rivestire il nuovo uomo, creato secondo Dio nella giustizia e nella santità della verità.", "25 Perciò, deposta la menzogna, parlate la verità ciascuno con il suo prossimo, perché siamo membra gli uni degli altri.", "26 Adiratevi, ma non peccate; il sole non tramonti sulla vostra ira,", "27 e non date luogo al diavolo.", "28 Chi rubava, non rubi più; ma si dia piuttosto da fare lavorando onestamente con le proprie mani per avere da dare a chi è nel bisogno.", "29 Nessuna parola cattiva esca dalla vostra bocca; ma se ne avete una buona, che serva all'edificazione, secondo il bisogno, perché dia grazia a chi l'ascolta.", "30 Non rattristate lo Spirito Santo di Dio, con il quale siete stati suggellati per il giorno della redenzione.", "31 Ogni amarezza, ogni collera, ogni ira, ogni clamore e ogni parola offensiva siano tolti da voi, con ogni specie di malvagità.", "32 Siate invece gentili, compassionevoli, perdonandovi a vicenda come anche Dio ha perdonato a voi in Cristo.", "1 Siate dunque imitatori di Dio, come figli amati;", "2 camminate nell'amore, come anche Cristo vi ha amato e ha dato sé stesso per noi, come offerta e sacrificio a Dio, come profumo di soave odore."] },
+        { giorno: 12, titolo: "Un calice traboccante", riferimenti: ["Efesini 3:14-19"], testo: ["14 Per questa ragione piego le ginocchia davanti al Padre,", "15 dal quale prende nome ogni famiglia nei cieli e sulla terra,", "16 affinché egli vi conceda, secondo la ricchezza della sua gloria, di essere potentemente fortificati nello Spirito, nell'uomo interiore,", "17 affinché Cristo abiti per mezzo della fede nei vostri cuori, radicati e fondati nell'amore,", "18 affinché possiate comprendere con tutti i santi quale sia la larghezza, la lunghezza, l'altezza e la profondità,", "19 e conoscere l'amore di Cristo che sorpassa ogni conoscenza, affinché siate ricolmi di tutta la pienezza di Dio."] },
+        { giorno: 13, titolo: "Silenzio", riferimenti: ["Salmo 131:1-3"], testo: ["1 Signore, il mio cuore non si è inorgoglito, i miei occhi non si sono alzati con superbia; non vado in cerca di cose troppo grandi né troppo meravigliose per me.", "2 Anzi, io ho calmato e acquietato l'anima mia; come un bambino svezzato in braccio a sua madre, come un bambino svezzato è l'anima mia dentro di me.", "3 Speri Israele nel Signore, da ora e per sempre."] },
+        { giorno: 14, titolo: "Il dono della contemplazione", riferimenti: ["Luca 10:38-42"], testo: ["38 Mentre erano in cammino, Gesù entrò in un villaggio; e una donna, di nome Marta, lo ricevette in casa sua.", "39 Ella aveva una sorella, chiamata Maria, la quale, seduta ai piedi di Gesù, ascoltava la sua parola.", "40 Marta, invece, era tutta presa dai molti servizi; perciò, accostatasi a Gesù, disse: «Signore, non ti curi che mia sorella mi ha lasciata sola a servire? Dille dunque che mi aiuti».", "41 Ma Gesù le rispose: «Marta, Marta, tu ti affanni e ti agiti per molte cose;", "42 ma una sola è la cosa necessaria. Maria ha scelto la parte buona, che non le sarà tolta»."] },
+        { giorno: 15, titolo: "La preghiera nella Chiesa primitiva", riferimenti: ["Luca 18:35-43"], testo: ["35 Mentre si avvicinava a Gerico, un cieco sedeva lungo la strada a mendicare.", "36 Sentendo passare la folla, domandò che cosa accadesse.", "37 Gli dissero: «Passa Gesù il Nazareno!»", "38 Allora gridò: «Gesù, Figlio di Davide, abbi pietà di me!»", "39 Quelli che andavano avanti lo rimproveravano perché tacesse, ma lui gridava ancora più forte: «Figlio di Davide, abbi pietà di me!»", "40 Gesù si fermò e ordinò che gli fosse condotto; quando fu vicino, gli domandò:", "41 «Che vuoi che io ti faccia?» Egli rispose: «Signore, che io recuperi la vista!»", "42 Gesù gli disse: «Recupera la vista; la tua fede ti ha salvato!»", "43 Subito recuperò la vista e cominciò a seguirlo glorificando Dio. Tutto il popolo, vedendo, diede lode a Dio."] },
+        { giorno: 16, titolo: "La preghiera centrale nella storia del cristianesimo", riferimenti: ["Matteo 5:3-10"], testo: ["3 «Beati i poveri in spirito, perché di loro è il regno dei cieli.", "4 Beati gli afflitti, perché saranno consolati.", "5 Beati i mansueti, perché erediteranno la terra.", "6 Beati quelli che hanno fame e sete di giustizia, perché saranno saziati.", "7 Beati i misericordiosi, perché a loro sarà fatta misericordia.", "8 Beati i puri di cuore, perché vedranno Dio.", "9 Beati gli operatori di pace, perché saranno chiamati figli di Dio.", "10 Beati i perseguitati per amore della giustizia, perché di loro è il regno dei cieli."] },
+        { giorno: 17, titolo: "Pensieri", riferimenti: ["Filippesi 4:4-7"], testo: ["4 Rallegratevi sempre nel Signore; ve lo ripeto, rallegratevi.", "5 La vostra gentilezza sia nota a tutti gli uomini. Il Signore è vicino.", "6 Non angustiatevi per nulla, ma in ogni cosa fate conoscere le vostre richieste a Dio mediante preghiere e suppliche, con ringraziamento.", "7 E la pace di Dio, che sorpassa ogni comprensione, custodirà i vostri cuori e i vostri pensieri in Cristo Gesù."] },
+        { giorno: 18, titolo: "Una preghiera troppo profonda per essere descritta a parole", riferimenti: ["Romani 8:26-27"], testo: ["26 Allo stesso modo anche lo Spirito viene in aiuto alla nostra debolezza, perché non sappiamo pregare come si conviene, ma lo Spirito stesso intercede per noi con gemiti inesprimibili.", "27 E colui che scruta i cuori sa quale sia il desiderio dello Spirito, perché egli intercede per i santi secondo Dio."] },
+        { giorno: 19, titolo: "Il suono del silenzio", riferimenti: ["1 Re 19:11-15"], testo: ["11 Egli disse: «Esci e fermati sul monte davanti al Signore!» Ed ecco, il Signore passò. Ci fu un vento forte e impetuoso che squarciava i monti e spezzava le rocce davanti al Signore, ma il Signore non era nel vento. Dopo il vento ci fu un terremoto, ma il Signore non era nel terremoto.", "12 Dopo il terremoto ci fu un fuoco, ma il Signore non era nel fuoco. E dopo il fuoco, una voce sommessa e sottile.", "13 Quando Elia l'udì, si avvolse il volto nel mantello, uscì e si fermò all'ingresso della caverna. Ed ecco, una voce gli disse: «Che fai qui, Elia?»", "14 Egli rispose: «Sono stato pieno di zelo per il Signore, il Dio degli eserciti, perché i figli d'Israele hanno abbandonato il tuo patto, hanno abbattuto i tuoi altari e hanno ucciso i tuoi profeti con la spada; io sono rimasto solo, e cercano di togliermi la vita».", "15 Il Signore gli disse: «Va', torna indietro per il tuo cammino verso il deserto di Damasco; e quando sarai arrivato, ungerai Hazael come re di Siria»."] },
+        { giorno: 20, titolo: "La fontana della restaurazione", riferimenti: ["Geremia 2:4-7,13"], testo: ["4 Ascoltate la parola del Signore, casa di Giacobbe, e voi tutte le famiglie della casa d'Israele.", "5 Così dice il Signore: «Quale ingiustizia hanno trovato in me i vostri padri, per essersi allontanati da me, per esser andati dietro a vanità e divenire vani?", "6 Essi non hanno detto: “Dov'è il Signore che ci ha fatti uscire dal paese d'Egitto, che ci ha condotti attraverso il deserto, attraverso una terra arida e piena di crepacci, attraverso una terra di siccità e di ombra di morte, una terra che nessuno ha attraversato e dove nessun uomo ha abitato?”", "7 Io vi ho condotti in un paese fertile, perché mangiaste i suoi frutti e le sue primizie; ma quando siete entrati, avete contaminato il mio paese e avete reso la mia eredità un'abominazione.", "13 «Poiché il mio popolo ha commesso due mali: ha abbandonato me, la sorgente di acqua viva, e si è scavato delle cisterne, delle cisterne rotte che non possono contenere l'acqua."] },
+        { giorno: 21, titolo: "La camera interna del Signore", riferimenti: ["1 Corinzi 3:16-17"], testo: ["16 Non sapete che siete il tempio di Dio e che lo Spirito di Dio abita in voi?", "17 Se uno distrugge il tempio di Dio, Dio distruggerà lui; perché il tempio di Dio è santo, e questo tempio siete voi."] },
+        { giorno: 22, titolo: "La dimora di Dio al centro", riferimenti: ["Esodo 33:12-14"], testo: ["12 Mosè disse al Signore: «Tu mi hai detto: “Conduci questo popolo”, ma non mi hai fatto sapere chi manderai con me. Tu hai detto: “Io ti conosco per nome e tu hai trovato grazia ai miei occhi”.", "13 Se dunque ho trovato grazia ai tuoi occhi, ti prego, fammi conoscere le tue vie, affinché io ti conosca e trovi grazia ai tuoi occhi. Considera che questa nazione è il tuo popolo».", "14 Il Signore rispose: «La mia presenza andrà con te e io ti darò riposo»."] },
+        { giorno: 23, titolo: "La nostra unione mistica con Cristo", riferimenti: ["Romani 8:9-11"], testo: ["9 Voi però non siete nella carne, ma nello Spirito, se lo Spirito di Dio abita in voi. Se qualcuno non ha lo Spirito di Cristo, non è di lui.", "10 Ma se Cristo è in voi, il corpo è morto a causa del peccato, mentre lo Spirito è vita a causa della giustizia.", "11 E se lo Spirito di colui che ha risuscitato Gesù dai morti abita in voi, colui che ha risuscitato Cristo Gesù dai morti darà anche vita ai vostri corpi mortali, per mezzo del suo Spirito che abita in voi."] },
+        { giorno: 24, titolo: "Trasformazione dall'interno", riferimenti: ["Efesini 1:17-19"], testo: ["17 affinché il Dio del Signore nostro Gesù Cristo, il Padre della gloria, vi dia uno spirito di sapienza e di rivelazione nella conoscenza di lui,", "18 illuminando gli occhi del vostro cuore, affinché sappiate quale sia la speranza alla quale egli vi ha chiamati, quale la ricchezza della gloria della sua eredità nei santi,", "19 e quale l'immensità della sua potenza verso di noi che crediamo, secondo l'azione della sua forza possente."] },
+        { giorno: 25, titolo: "Alla ricerca del volto di Dio", riferimenti: ["Salmo 27:8,14", "2 Corinzi 4:5-7"], testo: ["8 Il mio cuore dice da parte tua: «Cercate il mio volto!» Io cerco il tuo volto, o Signore!", "14 Aspetta il Signore, sii forte e il tuo cuore si rinfranchi; sì, aspetta il Signore!", "5 Noi non predichiamo noi stessi, ma Cristo Gesù come Signore; e quanto a noi, siamo vostri servitori per amore di Gesù.", "6 Perché il Dio che disse: «Risplenda la luce fra le tenebre», è quello che risplendé nei nostri cuori per illuminarci con la conoscenza della gloria di Dio che risplende sul volto di Gesù Cristo.", "7 Ma noi abbiamo questo tesoro in vasi di terra, affinché l'eccellenza della potenza sia di Dio e non da noi."] },
+        { giorno: 26, titolo: "Comunione intima", riferimenti: ["Apocalisse 3:15-22"], testo: ["15 «Conosco le tue opere: non sei né freddo né bollente. Oh, fossi pur freddo o bollente!", "16 Così, poiché sei tiepido e non sei né freddo né bollente, io ti vomiterò dalla mia bocca.", "17 Tu dici: “Sono ricco, mi sono arricchito, e non ho bisogno di nulla”; e non sai che sei un miserabile, un pietoso, povero, cieco e nudo.", "18 Ti consiglio di comprare da me oro affinato dal fuoco per diventare ricco, e vesti bianche per rivestirti e perché la vergogna della tua nudità non appaia; e anche collirio per ungerti gli occhi, affinché tu veda.", "19 Io riprendo e castigo tutti quelli che amo; sii dunque zelante e ravvediti.", "20 Ecco, io sto alla porta e busso. Se qualcuno ascolta la mia voce e apre la porta, io entrerò da lui, cenerò con lui ed egli con me.", "21 A chi vince io concederò di sedere con me sul mio trono, come anch'io ho vinto e mi sono seduto con il Padre mio sul suo trono.", "22 Chi ha orecchi ascolti ciò che lo Spirito dice alle chiese»."] },
+        { giorno: 27, titolo: "Preghiera del cuore", riferimenti: ["Salmo 138:1-8"], testo: ["1 Io ti celebrerò con tutto il mio cuore; davanti agli dèi canterò le tue lodi.", "2 Mi prostrerò verso il tuo santo tempio, celebrerò il tuo nome per la tua bontà e per la tua fedeltà, perché hai magnificato la tua parola al di sopra di ogni tuo nome.", "3 Nel giorno che ti ho invocato, tu mi hai risposto; mi hai incoraggiato, hai fortificato l'anima mia.", "4 Tutti i re della terra ti celebreranno, o Signore, quando avranno udito le parole della tua bocca.", "5 Canteranno le vie del Signore, perché grande è la gloria del Signore.", "6 Poiché il Signore è eccelso, egli guarda l'umile, ma riconosce da lontano il superbo.", "7 Se cammino in mezzo all'angoscia, tu mi ridai la vita; stendi la tua mano contro l'ira dei miei nemici, e la tua destra mi salva.", "8 Il Signore compirà la sua opera per me. Signore, la tua bontà è eterna; non abbandonare l'opera delle tue mani."] },
+        { giorno: 28, titolo: "La preghiera come ricettività", riferimenti: ["Efesini 2:1-10"], testo: ["1 Voi eravate morti nei vostri falli e nei vostri peccati,", "2 nei quali un tempo camminaste secondo l'andazzo di questo mondo, secondo il principe della potenza dell'aria, lo spirito che ora opera nei figli della disubbidienza,", "3 tra i quali anche noi tutti un tempo ci comportavamo secondo le passioni della nostra carne, ubbidendo ai desideri della carne e dei pensieri; ed eravamo per natura figli d'ira, come gli altri.", "4 Ma Dio, che è ricco in misericordia, per il grande amore con cui ci ha amati,", "5 anche quando eravamo morti nei nostri falli, ci ha vivificati con Cristo (è per grazia che siete stati salvati),", "6 e ci ha risuscitati con lui e con lui ci ha fatti sedere nei luoghi celesti, in Cristo Gesù,", "7 per mostrare nei secoli futuri l'immensa ricchezza della sua grazia, mediante la sua bontà verso di noi in Cristo Gesù.", "8 Infatti è per grazia che siete stati salvati, mediante la fede; e ciò non viene da voi, è il dono di Dio.", "9 Non è per opere, affinché nessuno si vanti.", "10 Noi siamo opera sua, creati in Cristo Gesù per le buone opere, che Dio ha precedentemente preparate affinché le pratichiamo."] },
+        { giorno: 29, titolo: "Passare a un altro livello", riferimenti: ["Romani 6:3-11"], testo: ["3 Non sapete che tutti noi che siamo stati battezzati in Cristo Gesù, siamo stati battezzati nella sua morte?", "4 Siamo dunque stati sepolti con lui mediante il battesimo nella sua morte, affinché, come Cristo è stato risuscitato dai morti mediante la gloria del Padre, così anche noi camminiamo in novità di vita.", "5 Se infatti siamo stati uniti a lui nella somiglianza della sua morte, lo saremo anche in quella della sua risurrezione.", "6 Sappiamo che il nostro vecchio uomo è stato crocifisso con lui, affinché il corpo del peccato fosse annullato, e noi non fossimo più schiavi del peccato.", "7 Infatti chi è morto, è liberato dal peccato.", "8 Ora, se siamo morti con Cristo, crediamo che anche vivremo con lui,", "9 sapendo che Cristo, risuscitato dai morti, non muore più; la morte non ha più potere su di lui.", "10 Infatti egli morì per il peccato una volta per tutte, ma ora vive, e vive per Dio.", "11 Così anche voi consideratevi morti al peccato, ma viventi per Dio in Cristo Gesù."] },
+        { giorno: 30, titolo: "Vivere fuori dal centro", riferimenti: ["1 Tessalonicesi 5:16-24"], testo: ["16 Rallegratevi sempre.", "17 Pregate senza sosta.", "18 In ogni cosa rendete grazie, perché questa è la volontà di Dio in Cristo Gesù verso di voi.", "19 Non spegnete lo Spirito.", "20 Non disprezzate le profezie.", "21 Esaminate ogni cosa, trattenete ciò che è buono.", "22 Astenetevi da ogni forma di male.", "23 Or il Dio della pace vi santifichi completamente; e tutto il vostro essere, spirito, anima e corpo, sia conservato irreprensibile per la venuta del Signore nostro Gesù Cristo.", "24 Fedele è colui che vi chiama, il quale anche farà questo."] },
+        { giorno: 31, titolo: "Preghiera quotidiana", riferimenti: ["Salmo 63:1-8"], testo: ["1 O Dio, tu sei il mio Dio, io ti cerco; l'anima mia ha sete di te, la mia carne desidera te in una terra arida, esausta, senz'acqua.", "2 Così ti ho contemplato nel santuario, per vedere la tua potenza e la tua gloria.", "3 Poiché la tua bontà è migliore della vita, le mie labbra ti loderanno.", "4 Così ti benedirò finché vivrò; nel tuo nome alzerò le mie mani.", "5 L'anima mia si sazia come di midollo e di grasso, e la mia bocca ti loda con labbra gioiose,", "6 quando, nel mio letto, mi ricordo di te, medito su di te durante le veglie notturne.", "7 Poiché tu sei stato il mio soccorso; io canto di gioia all'ombra delle tue ali.", "8 L'anima mia si attacca a te, la tua destra mi sostiene."] },
+        { giorno: 32, titolo: "Consolazioni", riferimenti: ["Giovanni 21:15-17"], testo: ["15 Quando ebbero mangiato, Gesù disse a Simon Pietro: «Simone di Giovanni, mi ami più di costoro?» Egli rispose: «Sì, Signore, tu sai che io ti voglio bene». Gesù gli disse: «Pasci i miei agnelli».", "16 Gli disse di nuovo, una seconda volta: «Simone di Giovanni, mi ami?» Egli rispose: «Sì, Signore, tu sai che io ti voglio bene». Gesù gli disse: «Pascola le mie pecore».", "17 Gli disse la terza volta: «Simone di Giovanni, mi vuoi bene?» Pietro si addolorò che gli avesse detto la terza volta: «Mi vuoi bene?» e rispose: «Signore, tu sai tutto; tu sai che io ti voglio bene». Gesù gli disse: «Pascola le mie pecore»."] },
+        { giorno: 33, titolo: "Presenza", riferimenti: ["Salmo 16:1-11"], testo: ["1 Preservami, o Dio, perché in te mi rifugio.", "2 Io ho detto al Signore: «Tu sei il mio Signore; non ho alcun bene al di fuori di te».", "3 Quanto ai santi che sono sulla terra, essi sono i nobili, nei quali è tutto il mio diletto.", "4 Si moltiplichino i dolori di quelli che corrono dietro a un altro dio; io non parteciperò alle loro libazioni di sangue, né pronuncerò i loro nomi sulle mie labbra.", "5 Il Signore è la mia parte di eredità e il mio calice; tu sostieni la mia sorte.", "6 Le porzioni della mia eredità sono cadute in luoghi deliziosi; anzi, ho una bella eredità.", "7 Io benedico il Signore che mi ha consigliato; anche durante la notte il mio cuore mi istruisce.", "8 Io ho sempre posto il Signore davanti a me; poiché egli è alla mia destra, non vacillerò.", "9 Perciò il mio cuore è allegro, la mia anima gioisce; anche il mio corpo riposerà al sicuro,", "10 perché tu non abbandonerai l'anima mia nel soggiorno dei morti, né permetterai che il tuo santo vegga la corruzione.", "11 Tu mi farai conoscere la via della vita; gioia piena è nella tua presenza, delizia alla tua destra per sempre."] },
+        { giorno: 34, titolo: "Il dono del momento presente", riferimenti: ["Matteo 6:25-34"], testo: ["25 «Perciò vi dico: non siate ansiosi per la vostra vita, di ciò che mangerete o berrete; né per il vostro corpo, di che cosa vi vestirete. La vita non è forse più del cibo e il corpo più del vestito?", "26 Guardate gli uccelli del cielo: essi non seminano, non mietono, non raccolgono nei granai; eppure il Padre vostro celeste li nutre. Non valete voi molto più di loro?", "27 Chi di voi, con i suoi affanni, può aggiungere un cubito alla sua statura?", "28 E perché siete ansiosi per il vestito? Considerate come crescono i gigli del campo: non faticano e non filano;", "29 eppure vi dico che neanche Salomone, in tutta la sua gloria, fu vestito come uno di loro.", "30 Se dunque Dio veste così l'erba del campo, che oggi è e domani è gettata nel forno, non farà molto di più per voi, uomini di poca fede?", "31 Non siate dunque ansiosi dicendo: “Che cosa mangeremo?” o “che cosa berremo?” o “di che ci vestiremo?”", "32 Perché i pagani cercano tutte queste cose; ma il Padre vostro celeste sa che avete bisogno di tutte queste cose.", "33 Cercate prima il regno di Dio e la sua giustizia, e tutte queste cose vi saranno aggiunte.", "34 Non siate dunque ansiosi del domani, perché il domani si preoccuperà di sé stesso. Basta a ogni giorno il suo affanno."] },
+        { giorno: 35, titolo: "La montagna è visibile", riferimenti: ["Giovanni 9:6-7", "Giovanni 9:35-39"], testo: ["6 Detto questo, sputò per terra, fece del fango con la saliva, e impose il fango sugli occhi del cieco,", "7 e gli disse: «Va', lavati nella piscina di Siloe» (che significa: Inviato). Egli dunque andò, si lavò, e tornò che ci vedeva.", "35 Gesù seppe che l'avevano cacciato fuori; e, trovatolo, gli disse: «Credi tu nel Figlio dell'uomo?»", "36 Egli rispose: «Chi è, Signore, perché io creda in lui?»", "37 Gesù gli disse: «Tu l'hai visto; è colui che parla con te».", "38 Egli disse: «Io credo, Signore!» e lo adorò.", "39 Gesù disse: «Io sono venuto in questo mondo per giudicare, affinché quelli che non vedono, vedano, e quelli che vedono, diventino ciechi»."] },
+        { giorno: 36, titolo: "Ripresentare Cristo", riferimenti: ["Galati 2:19-21"], testo: ["19 Infatti io, mediante la legge, sono morto alla legge, per vivere a Dio.", "20 Sono stato crocifisso con Cristo: non sono più io che vivo, ma Cristo vive in me. E la vita che ora vivo nella carne, la vivo nella fede del Figlio di Dio, il quale mi ha amato e ha dato sé stesso per me.", "21 Non annullo la grazia di Dio; perché se la giustizia si ottiene mediante la legge, Cristo è morto invano."] },
+        { giorno: 37, titolo: "Il dono del lasciar andare", riferimenti: ["Filippesi 3:7-11"], testo: ["7 Ma quelle cose che per me erano guadagni, le ho considerate una perdita a causa di Cristo.", "8 Anzi, considero ogni cosa come una perdita a causa dell'eccellenza della conoscenza di Cristo Gesù, mio Signore, per il quale ho perduto tutte queste cose, e le considero come spazzatura, per guadagnare Cristo", "9 e per essere trovato in lui, avendo non una mia giustizia, che viene dalla legge, ma quella che si ha mediante la fede di Cristo, cioè la giustizia che viene da Dio, basata sulla fede,", "10 per conoscere lui, la potenza della sua risurrezione e la comunione delle sue sofferenze, diventando conforme a lui nella sua morte,", "11 per giungere in qualche modo alla risurrezione dei morti."] },
+        { giorno: 38, titolo: "Abbandono all'amore divino", riferimenti: ["Colossesi 3:5-15"], testo: ["5 Fate dunque morire ciò che in voi è terreno: fornicazione, impurità, passioni, desideri cattivi e avarizia, che è idolatria,", "6 cose che attirano l'ira di Dio sui figli della disubbidienza.", "7 In esse anche voi un tempo camminaste, quando vivevate in esse.", "8 Ma ora, deponete anche voi tutte queste cose: ira, collera, malizia, calunnia, parole oscene dalla vostra bocca.", "9 Non mentite gli uni agli altri, perché vi siete spogliati dell'uomo vecchio con le sue opere", "10 e vi siete rivestiti dell'uomo nuovo, che si rinnova nella conoscenza secondo l'immagine di colui che lo ha creato.", "11 Qui non c'è Greco né Giudeo, circoncisione né incirconcisione, barbaro, Scita, schiavo, libero; ma Cristo è tutto e in tutti.", "12 Rivestitevi dunque, come eletti di Dio, santi e amati, di sentimenti di compassione, di bontà, di umiltà, di mansuetudine, di pazienza;", "13 sopportandovi gli uni gli altri e perdonandovi a vicenda, se uno ha motivo di lamentarsi dell'altro; come il Signore vi ha perdonati, così fate anche voi.", "14 E al di sopra di tutto questo, rivestitevi dell'amore, che è il vincolo della perfezione.", "15 E la pace di Cristo regni nei vostri cuori, alla quale siete stati chiamati in un solo corpo; e siate riconoscenti."] },
+        { giorno: 39, titolo: "Contemplazione e azione", riferimenti: ["1 Giovanni 4:16-21"], testo: ["16 E noi abbiamo conosciuto e creduto l'amore che Dio ha per noi. Dio è amore; e chi rimane nell'amore, rimane in Dio e Dio rimane in lui.", "17 In questo l'amore è stato reso perfetto in noi, perché abbiamo piena fiducia nel giorno del giudizio; perché come è lui, anche noi siamo in questo mondo.", "18 Nell'amore non c'è timore, anzi l'amore perfetto scaccia il timore, perché il timore suppone castigo; e chi teme, non è perfetto nell'amore.", "19 Noi amiamo perché egli ci ha amati per primo.", "20 Se uno dice: «Io amo Dio», e odia suo fratello, è un bugiardo; perché chi non ama suo fratello che vede, non può amare Dio che non vede.", "21 E questo è il comandamento che abbiamo da lui: chi ama Dio, ami anche suo fratello."] },
+        { giorno: 40, titolo: "Contemplazione e comunità", riferimenti: ["Galati 5:22-26"], testo: ["22 Il frutto dello Spirito invece è amore, gioia, pace, pazienza, benignità, bontà, fedeltà,", "23 mansuetudine, autocontrollo; contro queste cose non c'è legge.", "24 Coloro che sono di Cristo hanno crocifisso la carne con le sue passioni e i suoi desideri.", "25 Se viviamo per lo Spirito, camminiamo anche secondo lo Spirito.", "26 Non cerchiamo la vanagloria, provocandoci gli uni gli altri, invidiandoci a vicenda."] }
+    ];
+
+    // ============================================================
+    //  STATO
+    // ============================================================
+    let currentDay = 1;
+    let fontSize = 1.1;
+    let checkedDays = new Set();
+
+    try {
+        const saved = localStorage.getItem('checkedDays');
+        if (saved) {
+            const arr = JSON.parse(saved);
+            checkedDays = new Set(arr);
+        }
+    } catch(e) {}
+
+    // ============================================================
+    //  DOM REFS
+    // ============================================================
+    const dayStrip = document.getElementById('dayStrip');
+    const detailContainer = document.getElementById('day-detail');
+    const darkToggle = document.getElementById('darkToggle');
+    const notesModal = document.getElementById('notesModal');
+    const openNotesBtn = document.getElementById('openNotesBtn');
+    const closeNotesBtn = document.getElementById('closeNotesModal');
+    const notesList = document.getElementById('notesList');
+    const fontInc = document.getElementById('fontInc');
+    const fontDec = document.getElementById('fontDec');
+
+    // ============================================================
+    //  FUNZIONI
+    // ============================================================
+
+    function saveCheckedDays() {
+        localStorage.setItem('checkedDays', JSON.stringify([...checkedDays]));
+    }
+
+    function toggleCheck(giorno) {
+        if (checkedDays.has(giorno)) {
+            checkedDays.delete(giorno);
+        } else {
+            checkedDays.add(giorno);
+        }
+        saveCheckedDays();
+        updateDayButtons();
+        updateCheckButton();
+    }
+
+    function updateDayButtons() {
+        document.querySelectorAll('.day-btn').forEach(btn => {
+            const g = parseInt(btn.dataset.giorno);
+            btn.classList.toggle('checked', checkedDays.has(g));
+        });
+    }
+
+    function updateCheckButton() {
+        const btn = document.getElementById('checkToggleBtn');
+        if (!btn) return;
+        const isChecked = checkedDays.has(currentDay);
+        btn.classList.toggle('is-checked', isChecked);
+        btn.textContent = isChecked ? '✅ Segnato' : '☐ Segna come letto';
+    }
+
+    // --- Gestione font size ---
+    function changeFontSize(delta) {
+        fontSize = Math.min(1.8, Math.max(0.8, fontSize + delta));
+        const bibleEl = document.getElementById('bibleText');
+        if (bibleEl) bibleEl.style.fontSize = fontSize + 'rem';
+        // Aggiorna anche le note (textarea) – il font-size è ereditato, ma forziamo
+        const noteText = document.getElementById('noteText');
+        if (noteText) noteText.style.fontSize = fontSize + 'rem';
+        // modale note – verrà aggiornata al prossimo apertura
+    }
+
+    // --- RENDER STRISCIA GIORNI ---
+    function renderDayStrip() {
+        dayStrip.innerHTML = '';
+        days.forEach(d => {
+            const btn = document.createElement('button');
+            btn.className = 'day-btn';
+            if (d.giorno === currentDay) btn.classList.add('active');
+            if (checkedDays.has(d.giorno)) btn.classList.add('checked');
+            btn.textContent = d.giorno;
+            btn.dataset.giorno = d.giorno;
+            btn.addEventListener('click', () => selectDay(d.giorno));
+            dayStrip.appendChild(btn);
+        });
+        const activeBtn = dayStrip.querySelector('.day-btn.active');
+        if (activeBtn) {
+            activeBtn.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+        }
+    }
+
+    function selectDay(giorno) {
+        currentDay = giorno;
+        document.querySelectorAll('.day-btn').forEach(btn => {
+            btn.classList.toggle('active', parseInt(btn.dataset.giorno) === giorno);
+        });
+        renderDayDetail(giorno);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderDayDetail(giorno) {
+        const dayData = days.find(d => d.giorno === giorno);
+        if (!dayData) return;
+
+        const savedNote = localStorage.getItem(`note_${giorno}`) || '';
+        const isChecked = checkedDays.has(giorno);
+
+        let html = `
+            <div class="detail-header">
+                <div class="day-number">Giorno ${dayData.giorno}</div>
+                <h2>${dayData.titolo}</h2>
+                <div class="reference">${dayData.riferimenti.join(' — ')}</div>
+            </div>
+
+            <div class="bible-text" id="bibleText" style="font-size:${fontSize}rem;">
+                ${dayData.testo.map(v => `<span class="versetto">${v}</span>`).join('')}
+            </div>
+            <div class="translation-note">Nuova Riveduta 2006</div>
+
+            <div class="check-section">
+                <button class="check-btn ${isChecked ? 'is-checked' : ''}" id="checkToggleBtn">
+                    ${isChecked ? '✅ Segnato' : '☐ Segna come letto'}
+                </button>
+            </div>
+
+            <div class="day-nav">
+                <button id="prevDay" ${giorno === 1 ? 'disabled' : ''}>← Giorno ${giorno-1}</button>
+                <button id="nextDay" ${giorno === days.length ? 'disabled' : ''}>Giorno ${giorno+1} →</button>
+            </div>
+
+            <div class="notes-section">
+                <h3>📝 Riflessioni personali</h3>
+                <textarea id="noteText" placeholder="Scrivi qui le tue riflessioni su questo passo..." style="font-size:${fontSize}rem;">${savedNote}</textarea>
+                <div class="note-actions">
+                    <button id="saveNote">💾 Salva nota</button>
+                    <button class="clear-note" id="clearNote">🗑️ Cancella</button>
+                    <span class="saved-indicator" id="savedIndicator">✓ Salvato</span>
+                </div>
+            </div>
+        `;
+
+        detailContainer.innerHTML = html;
+
+        // Check button
+        const checkBtn = document.getElementById('checkToggleBtn');
+        if (checkBtn) {
+            checkBtn.addEventListener('click', () => {
+                toggleCheck(giorno);
+                const isNowChecked = checkedDays.has(giorno);
+                checkBtn.classList.toggle('is-checked', isNowChecked);
+                checkBtn.textContent = isNowChecked ? '✅ Segnato' : '☐ Segna come letto';
+            });
+        }
+
+        // Navigazione
+        document.getElementById('prevDay')?.addEventListener('click', () => {
+            if (currentDay > 1) selectDay(currentDay - 1);
+        });
+        document.getElementById('nextDay')?.addEventListener('click', () => {
+            if (currentDay < days.length) selectDay(currentDay + 1);
+        });
+
+        // Note
+        const noteText = document.getElementById('noteText');
+        const saveBtn = document.getElementById('saveNote');
+        const clearBtn = document.getElementById('clearNote');
+        const indicator = document.getElementById('savedIndicator');
+
+        function saveNote() {
+            if (noteText) {
+                localStorage.setItem(`note_${giorno}`, noteText.value);
+                if (indicator) {
+                    indicator.classList.add('show');
+                    setTimeout(() => indicator.classList.remove('show'), 2000);
+                }
+            }
+        }
+
+        saveBtn?.addEventListener('click', saveNote);
+
+        clearBtn?.addEventListener('click', () => {
+            if (noteText) {
+                noteText.value = '';
+                localStorage.removeItem(`note_${giorno}`);
+                if (indicator) {
+                    indicator.textContent = '✓ Cancellato';
+                    indicator.classList.add('show');
+                    setTimeout(() => {
+                        indicator.classList.remove('show');
+                        indicator.textContent = '✓ Salvato';
+                    }, 2000);
+                }
+            }
+        });
+
+        let saveTimeout;
+        noteText?.addEventListener('input', () => {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(saveNote, 600);
+        });
+    }
+
+    // --- MODALE NOTE ---
+    function renderAllNotes() {
+        const items = [];
+        days.forEach(d => {
+            const note = localStorage.getItem(`note_${d.giorno}`);
+            if (note && note.trim() !== '') {
+                items.push({ giorno: d.giorno, titolo: d.titolo, testo: note.trim() });
+            }
+        });
+
+        if (items.length === 0) {
+            notesList.innerHTML = `<div class="empty-notes">📭 Nessuna riflessione salvata. Inizia a scrivere le tue note nei singoli giorni!</div>`;
+            return;
+        }
+
+        notesList.innerHTML = items.map(item => `
+            <div class="note-item">
+                <div class="note-header">
+                    <span class="day-label">Giorno ${item.giorno}</span>
+                    <span class="title">${item.titolo}</span>
+                </div>
+                <div class="note-body">${item.testo.replace(/\n/g, '<br>')}</div>
+            </div>
+        `).join('');
+    }
+
+    function openNotesModal() {
+        renderAllNotes();
+        notesModal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeNotesModalFn() {
+        notesModal.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    // ============================================================
+    //  EVENTI
+    // ============================================================
+    darkToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark');
+        darkToggle.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+    });
+
+    fontInc.addEventListener('click', () => changeFontSize(0.1));
+    fontDec.addEventListener('click', () => changeFontSize(-0.1));
+
+    openNotesBtn.addEventListener('click', openNotesModal);
+    closeNotesBtn.addEventListener('click', closeNotesModalFn);
+    notesModal.addEventListener('click', (e) => {
+        if (e.target === notesModal) closeNotesModalFn();
+    });
+
+    // ============================================================
+    //  AVVIO
+    // ============================================================
+    renderDayStrip();
+    renderDayDetail(1);
+</script>
+
+</body>
+</html>
